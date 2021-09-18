@@ -7,9 +7,12 @@ verify_ssl = true
 python_version = "{python_version}"
 
 [packages]
+typer = "*"
+appdirs = "*"
+pydantic = "*"
 
 [dev-packages]
-black = "==20.8b1"
+black = "*"
 flake8 = "*"
 isort = "*"
 mypy = "*"

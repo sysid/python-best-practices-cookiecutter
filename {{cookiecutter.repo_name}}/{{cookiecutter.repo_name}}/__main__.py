@@ -1,7 +1,3 @@
-import sys
+from .main import app
 
-from {{cookiecutter.repo_name}}.{{cookiecutter.repo_name}} import fib
-
-if __name__ == "__main__":
-    n = int(sys.argv[1])
-    print(fib(n))
+app(prog_name="{{cookiecutter.package_name}}")
