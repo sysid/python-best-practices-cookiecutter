@@ -7,7 +7,8 @@ BUILDDIR      = build
 MAKE          = make
 VERSION       = $(shell cat VERSION)
 
-app_root = .
+app_root = $(PROJ_DIR)
+app_root ?= .
 pkg_src =  $(app_root)/{{cookiecutter.package_name}}
 tests_src = $(app_root)/tests
 
@@ -47,12 +48,12 @@ coverage:  ## - perform test coverage checks
 
 .PHONY: format
 format:  ## - perform code style format
-	@black src/{{cookiecutter.package_name}} tests
+	@black {{cookiecutter.package_name}} tests
 
 
 .PHONY: check-format
 check-format:  ## - check code format compliance
-	@black --check src/{{cookiecutter.package_name}} tests
+	@black --check {{cookiecutter.package_name}} tests
 
 
 .PHONY: sort-imports
@@ -75,7 +76,7 @@ check-style: check-sort-imports check-format  ## - check code style compliance
 
 .PHONY: check-types
 check-types:  ## - check type hint annotations
-	@cd src; mypy -p {{cookiecutter.package_name}} --ignore-missing-imports
+	@mypy -p {{cookiecutter.package_name}} --ignore-missing-imports
 
 
 .PHONY: check-lint
@@ -112,6 +113,14 @@ tag:  ## tag
 	@echo "tagging $(VERSION)"
 	git tag -a $(VERSION) -m "version $(VERSION)"
 	git push --tags
+
+.PHONY: install
+install: clean build uninstall ## pipx install
+	pipx install $(app_root)/{{cookiecutter.package_name}}
+
+.PHONY: uninstall
+uninstall:  ## pipx uninstall
+	pipx uninstall {{cookiecutter.package_name}}
 
 .PHONY: bump-major
 bump-major:  ## bump-major

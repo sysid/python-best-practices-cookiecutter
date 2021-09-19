@@ -10,6 +10,7 @@ python_version = "{python_version}"
 typer = "*"
 appdirs = "*"
 pydantic = "*"
+{{ cookiecutter.repo_name }} = {editable = true, path = "."}
 
 [dev-packages]
 black = "*"
@@ -19,3 +20,5 @@ mypy = "*"
 pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
+build = "*"
+pytest-mock = "*"
