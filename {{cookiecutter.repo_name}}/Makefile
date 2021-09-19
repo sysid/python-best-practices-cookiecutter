@@ -33,12 +33,12 @@ tox:   ## Run tox
 
 
 .PHONY: test
-test:  ## - run tests
+test:  ## run tests
 	@python -m pytest tests
 
 
 .PHONY: coverage
-coverage:  ## - perform test coverage checks
+coverage:  ## perform test coverage checks
 	python -m coverage erase
 	python -m coverage run --include=$(pkg_src)/* -m pytest -ra
 	#python -m coverage report -m
@@ -47,45 +47,45 @@ coverage:  ## - perform test coverage checks
 
 
 .PHONY: format
-format:  ## - perform code style format
+format:  ## perform code style format
 	@black {{cookiecutter.package_name}} tests
 
 
 .PHONY: check-format
-check-format:  ## - check code format compliance
+check-format:  ## check code format compliance
 	@black --check {{cookiecutter.package_name}} tests
 
 
 .PHONY: sort-imports
-sort-imports:  ## - apply import sort ordering
+sort-imports:  ## apply import sort ordering
 	@isort . --profile black
 
 
 .PHONY: check-sort-imports
-check-sort-imports:  ## - check imports are sorted
+check-sort-imports:  ## check imports are sorted
 	@isort . --check-only --profile black
 
 
 .PHONY: style
-style: sort-imports format  ## - perform code style format
+style: sort-imports format  ## perform code style format
 
 
 .PHONY: check-style
-check-style: check-sort-imports check-format  ## - check code style compliance
+check-style: check-sort-imports check-format  ## check code style compliance
 
 
 .PHONY: check-types
-check-types:  ## - check type hint annotations
+check-types:  ## check type hint annotations
 	@mypy -p {{cookiecutter.package_name}} --ignore-missing-imports
 
 
 .PHONY: check-lint
-check-lint:  ## - run static analysis checks
+check-lint:  ## run static analysis checks
 	@pylint --rcfile=.pylintrc {{cookiecutter.package_name}} ./tests setup.py ./examples
 
 
 .PHONY: check-static-analysis
-check-static-analysis: check-lint check-types  ## - check code style compliance
+check-static-analysis: check-lint check-types  ## check code style compliance
 
 
 .PHONY: build
@@ -94,12 +94,12 @@ build: clean style  ## format and build
 	python -m build
 
 .PHONY: dist
-dist:  ## - create a wheel distribution package
+dist:  ## create a wheel distribution package
 	@python setup.py bdist_wheel
 
 
 .PHONY: dist-test
-dist-test: dist  ## - test a wheel distribution package
+dist-test: dist  ## test a wheel distribution package
 	@cd dist && ../tests/test-dist.bash ./{{cookiecutter.package_name}}-*-py3-none-any.whl
 
 
@@ -120,7 +120,7 @@ install: clean build uninstall ## pipx install
 
 .PHONY: uninstall
 uninstall:  ## pipx uninstall
-	pipx uninstall {{cookiecutter.package_name}}
+	-pipx uninstall {{cookiecutter.package_name}}
 
 .PHONY: bump-major
 bump-major:  ## bump-major
@@ -135,7 +135,7 @@ bump-patch:  ## bump-patch
 	bumpversion --verbose patch
 
 .PHONY: help
-help: ## Show help message
+help:  ## Show help message
 	@IFS=$$'\n' ; \
 	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
 	printf "%s\n\n" "Usage: make [task]"; \
