@@ -5,6 +5,7 @@
   "package_short_description": "A description of the package",
   "user_name": "sysid",
   "email": "sysid@gmx.de",
+  "use_make_confirm": "n",
   "year": "{% now 'utc', '%Y' %}",
   "_extensions": ["jinja2_time.TimeExtension"]
 }

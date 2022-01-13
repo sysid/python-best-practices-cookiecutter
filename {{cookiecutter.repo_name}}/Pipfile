@@ -9,12 +9,14 @@ python_version = "{python_version}"
 [packages]
 typer = "*"
 appdirs = "*"
+ipython = "*"
 pydantic = "*"
 {{ cookiecutter.repo_name }} = {editable = true, path = "."}
 
 [dev-packages]
 black = "*"
 flake8 = "*"
+flake8-bugbear = "*"
 isort = "*"
 mypy = "*"
 pre-commit = "*"

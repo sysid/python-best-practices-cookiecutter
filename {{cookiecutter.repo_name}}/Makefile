@@ -2,7 +2,6 @@
 MAKEFLAGS += --no-print-directory
 
 # You can set these variables from the command line, and also from the environment for the first two.
-SOURCEDIR     = source
 BUILDDIR      = build
 MAKE          = make
 VERSION       = $(shell cat VERSION)
@@ -12,81 +11,73 @@ app_root ?= .
 pkg_src =  $(app_root)/{{cookiecutter.package_name}}
 tests_src = $(app_root)/tests
 
-# pipx installed globals
-isort = isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --combine-as --line-width 88 $(pkg_src) $(tests_src)
-black = black $(pkg_src) $(tests_src)
-mypy = mypy $(pkg_src)
-tox = tox
-pipenv = pipenv
-#mypy = mypy --config-file $(app_root)/mypy.ini $(pkg_src)
+define BROWSER_PYSCRIPT
+import os, webbrowser, sys
 
-.PHONY: clean
-clean:  ## - clean all files using .gitignore rules
-	@echo "Cleaning up..."
-	#@git clean -X -f -d
-	rm -rf dist
+try:
+	from urllib import pathname2url
+except:
+	from urllib.request import pathname2url
+
+webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
+endef
+export BROWSER_PYSCRIPT
+BROWSER := python -c "$$BROWSER_PYSCRIPT"
+
+define PRINT_HELP_PYSCRIPT
+import re, sys
+
+for line in sys.stdin:
+	match = re.match(r'^([a-zA-Z_-]+):.*?## (.*)$$', line)
+	if match:
+		target, help = match.groups()
+		print("\033[36m%-20s\033[0m %s" % (target, help))
+endef
+export PRINT_HELP_PYSCRIPT
+
+
+lint: ## check style with flake8
+	flake8 {{ cookiecutter.package_name }}
 
 
 .PHONY: tox
 tox:   ## Run tox
 	$(tox)
 
-
 .PHONY: test
 test:  ## run tests
 	@python -m pytest tests
 
-
 .PHONY: coverage
 coverage:  ## perform test coverage checks
 	python -m coverage erase
-	python -m coverage run --include=$(pkg_src)/* -m pytest -ra
-	#python -m coverage report -m
+	python -m coverage run --source {{ cookiecutter.package_name }} -m pytest -ra
+	python -m coverage report -m
 	python -m coverage html
-	open htmlcov/index.html  # work on macOS
-
+	$(BROWSER) htmlcov/index.html
 
 .PHONY: format
 format:  ## perform code style format
 	@black {{cookiecutter.package_name}} tests
 
 
-.PHONY: check-format
-check-format:  ## check code format compliance
-	@black --check {{cookiecutter.package_name}} tests
-
-
 .PHONY: sort-imports
 sort-imports:  ## apply import sort ordering
 	@isort . --profile black
-
 
 .PHONY: check-sort-imports
 check-sort-imports:  ## check imports are sorted
 	@isort . --check-only --profile black
 
-
 .PHONY: style
 style: sort-imports format  ## perform code style format
-
 
 .PHONY: check-style
 check-style: check-sort-imports check-format  ## check code style compliance
 
-
-.PHONY: check-types
-check-types:  ## check type hint annotations
+.PHONY: mypy
+mypy:  ## check type hint annotations
 	@mypy -p {{cookiecutter.package_name}} --ignore-missing-imports
-
-
-.PHONY: check-lint
-check-lint:  ## run static analysis checks
-	@pylint --rcfile=.pylintrc {{cookiecutter.package_name}} ./tests setup.py ./examples
-
-
-.PHONY: check-static-analysis
-check-static-analysis: check-lint check-types  ## check code style compliance
-
 
 .PHONY: build
 build: clean style  ## format and build
@@ -95,12 +86,9 @@ build: clean style  ## format and build
 
 .PHONY: dist
 dist:  ## create a wheel distribution package
+	@python setup.py sdist
 	@python setup.py bdist_wheel
-
-
-.PHONY: dist-test
-dist-test: dist  ## test a wheel distribution package
-	@cd dist && ../tests/test-dist.bash ./{{cookiecutter.package_name}}-*-py3-none-any.whl
+	ls -al dist
 
 
 .PHONY: upload
@@ -135,19 +123,30 @@ bump-patch:  ## bump-patch
 	bumpversion --verbose patch
 
 .PHONY: help
-help:  ## Show help message
-	@IFS=$$'\n' ; \
-	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
-	printf "%s\n\n" "Usage: make [task]"; \
-	printf "%-20s %s\n" "task" "help" ; \
-	printf "%-20s %s\n" "------" "----" ; \
-	for help_line in $${help_lines[@]}; do \
-		IFS=$$':' ; \
-		help_split=($$help_line) ; \
-		help_command=`echo $${help_split[0]} | sed -e 's/^ *//' -e 's/ *$$//'` ; \
-		help_info=`echo $${help_split[2]} | sed -e 's/^ *//' -e 's/ *$$//'` ; \
-		printf '\033[36m'; \
-		printf "%-20s %s" $$help_command ; \
-		printf '\033[0m'; \
-		printf "%s\n" $$help_info; \
-	done
+help:
+	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+
+.PHONY: clean
+clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+
+.PHONY: clean-build
+clean-build: ## remove build artifacts
+	rm -fr build/
+	rm -fr dist/
+	rm -fr .eggs/
+	find . \( -path ./env -o -path ./venv -o -path ./.env -o -path ./.venv \) -prune -o -name '*.egg-info' -exec rm -fr {} +
+	find . \( -path ./env -o -path ./venv -o -path ./.env -o -path ./.venv \) -prune -o -name '*.egg' -exec rm -f {} +
+
+.PHONY: clean-pyc
+clean-pyc: ## remove Python file artifacts
+	find . -name '*.pyc' -exec rm -f {} +
+	find . -name '*.pyo' -exec rm -f {} +
+	find . -name '*~' -exec rm -f {} +
+	find . -name '__pycache__' -exec rm -fr {} +
+
+{%- if cookiecutter.use_make_confirm == 'y' %}
+.PHONY: _confirm
+_confirm:
+	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@echo "Action confirmed by user."
+{%- endif %}
